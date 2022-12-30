@@ -2,8 +2,9 @@ import requests
 import json
 import os
 import datetime
+import dotenv
 
-
+dotenv.load_dotenv()
 headers = {
     'Authorization': f"Bot {os.environ['DISCORD_TOKEN']}",
     'Content-Type': 'application/json'

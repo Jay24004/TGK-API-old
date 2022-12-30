@@ -14,7 +14,7 @@ app.votes = app.db.Votes
 
 @app.route('/')
 def index():
-    abort(404)
+    return "Unauthorized", 401
 
 @app.route('/api/vote', methods=['POST'])
 def vote():
