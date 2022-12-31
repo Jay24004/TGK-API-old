@@ -1,5 +1,5 @@
-from flask import Flask, request, abort
-from utils.discord import create_dm, send_dm, send_webhook
+from flask import Flask, request, abort, redirect
+from utils.discord import create_dm, send_dm, send_webhook, get_code, get_user_data, refresh_token
 from dotenv import load_dotenv
 import os
 import pymongo
@@ -9,7 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 app.mongo = pymongo.MongoClient(os.environ['MONGO_URL'])
 app.db = app.mongo.tgk_database
-app.outh = app.db.outh
+app.auth = app.db.auth
 app.votes = app.db.Votes
 
 @app.route('/')
@@ -45,3 +45,37 @@ def vote():
     send_dm(dm_id=user_data['dm_id'], total_votes=user_data['votes'], streak=user_data['streak'])
     send_webhook(user_data['_id'], user_data['votes'], user_data['streak'])
     return "OK", 200
+
+@app.route('/api/linked-role/auth')
+def linked_role_auth():
+    
+    #check if code argument is present
+    if request.args.get('code') is None:
+        return redirect('https://discord.com/api/oauth2/authorize?client_id=816699167824281621&redirect_uri=https%3A%2F%2Ftgk-api.vercel.app%2Fapi%2Flinked-role%2Fauth&response_type=code&scope=identify%20role_connections.write')
+    
+    user_token = get_code(request.args.get('code'))
+
+    user_data = get_user_data(user_token['access_token'])
+
+    data = app.auth.find_one({'_id': int(user_data['id'])})
+    if data is None:
+        data = {
+            '_id': int(user_data['id']),
+            'access_token': user_token['access_token'],
+            'refresh_token': user_token['refresh_token'],
+            'expires_in': user_token['expires_in'],
+            'expires_at': datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in']),
+            'username': user_data['username'],
+            'discriminator': user_data['discriminator'],            
+        }
+        app.auth.insert_one(data)
+    else:
+        data['access_token'] = user_token['access_token']
+        data['refresh_token'] = user_token['refresh_token']
+        data['expires_in'] = user_token['expires_in']
+        data['expires_at'] = datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in'])
+        data['username'] = user_data['username']
+        data['discriminator'] = user_data['discriminator']
+        app.auth.update_one({'_id': int(user_data['id'])}, {'$set': data})
+    
+    return redirect('https://discord.gg/yEPYYDZ3dD')

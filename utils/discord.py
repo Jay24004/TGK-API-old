@@ -16,6 +16,47 @@ webhook_headers = {
 
 base_url = 'https://discord.com/api/v10'
 
+
+def get_code(code):
+    headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    data ={
+        'client_id': os.environ['DISCORD_ID'],
+        'client_secret': os.environ['DISCORD_SECRET'],
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': os.environ['REDIRECT_URI'],
+        'scope': 'identify role_connections.write'
+    }
+    r = requests.post('https://discord.com/api/oauth2/token', data=data, headers=headers)
+    if r.status_code == 200:
+        return r.json()
+    else:
+        return r.json()
+
+def refresh_token(refresh_token):
+    headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    data ={
+        'client_id': os.environ['DISCORD_ID'],
+        'client_secret': os.environ['DISCORD_SECRET'],
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token,
+    }
+    r = requests.post('https://discord.com/api/oauth2/token', data=data, headers=headers)
+    if r.status_code == 200:
+        return r.json()
+    else:
+        return r.json()
+
+def get_user_data(access_token):
+    headers = { 'Authorization': f"Bearer {access_token}", 'Content-Type': 'application/json'}
+    r = requests.get(base_url + '/users/@me', headers=headers)
+    if r.status_code == 200:
+        return r.json()
+    else:
+        #check if token is expired
+        if r.status_code == 401:
+            return r.json()
+
 def create_dm(user_id):
     data = {
         'recipient_id': user_id
