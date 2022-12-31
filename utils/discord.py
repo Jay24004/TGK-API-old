@@ -17,6 +17,17 @@ webhook_headers = {
 base_url = 'https://discord.com/api/v10'
 
 
+def get_oath_url():
+    url = "https://discord.com/api/oauth2/authorize"
+    params = {
+        'client_id': os.environ['DISCORD_ID'],
+        'redirect_uri': os.environ['REDIRECT_URI'],
+        'response_type': 'code',
+        'scope': 'identify role_connections.write',
+        'prompt': 'consent'
+    }
+    return f'{url}?{requests.compat.urlencode(params)}'
+
 def get_code(code):
     headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
     data ={
@@ -48,14 +59,13 @@ def refresh_token(refresh_token):
         return r.json()
 
 def get_user_data(access_token):
-    headers = { 'Authorization': f"Bearer {access_token}", 'Content-Type': 'application/json'}
-    r = requests.get(base_url + '/users/@me', headers=headers)
+    headers = { 'Authorization': f"Bearer {access_token}" }
+    r = requests.get('https://discord.com/api/v10/users/@me', headers=headers)
     if r.status_code == 200:
         return r.json()
     else:
-        #check if token is expired
-        if r.status_code == 401:
-            return r.json()
+        return r.json()
+
 
 def create_dm(user_id):
     data = {

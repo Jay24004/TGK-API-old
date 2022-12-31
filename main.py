@@ -1,5 +1,5 @@
 from flask import Flask, request, abort, redirect
-from utils.discord import create_dm, send_dm, send_webhook, get_code, get_user_data, refresh_token
+from utils.discord import create_dm, send_dm, send_webhook, get_code, get_user_data, refresh_token, get_oath_url
 from dotenv import load_dotenv
 import os
 import pymongo
@@ -51,11 +51,15 @@ def linked_role_auth():
     
     #check if code argument is present
     if request.args.get('code') is None:
-        return redirect('https://discord.com/api/oauth2/authorize?client_id=816699167824281621&redirect_uri=https%3A%2F%2Ftgk-api.vercel.app%2Fapi%2Flinked-role%2Fauth&response_type=code&scope=identify%20role_connections.write')
-    
+        return redirect(get_oath_url())    
+
     user_token = get_code(request.args.get('code'))
+    if 'access_token' not in user_token.keys():
+        return user_token, 400
 
     user_data = get_user_data(user_token['access_token'])
+    if 'id' not in user_data.keys():
+        return user_data, 400
 
     data = app.auth.find_one({'_id': int(user_data['id'])})
     if data is None:
