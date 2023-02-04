@@ -1,5 +1,5 @@
 from flask import Flask, request, abort, redirect
-from utils.discord import create_dm, send_dm, send_webhook, get_code, get_user_data, refresh_token, get_oath_url
+from utils.discord import create_dm, send_dm, send_webhook, get_code, get_user_data,  get_oath_url, update_metadata
 from dotenv import load_dotenv
 import os
 import pymongo
@@ -70,10 +70,12 @@ def linked_role_auth():
             'expires_in': user_token['expires_in'],
             'expires_at': datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in']),
             'username': user_data['username'],
-            'discriminator': user_data['discriminator'],            
+            'discriminator': user_data['discriminator'],
+            'metadata': {'platform_name': "The Gambler's Kingdom", 'platform_username': user_data['username'], 'metadata': {}}
         }
         app.auth.insert_one(data)
     else:
+        print("data found")
         data['access_token'] = user_token['access_token']
         data['refresh_token'] = user_token['refresh_token']
         data['expires_in'] = user_token['expires_in']
@@ -82,4 +84,5 @@ def linked_role_auth():
         data['discriminator'] = user_data['discriminator']
         app.auth.update_one({'_id': int(user_data['id'])}, {'$set': data})
     
+    update_metadata(data['access_token'], data['metadata'])
     return redirect('https://discord.gg/yEPYYDZ3dD')

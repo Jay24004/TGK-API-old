@@ -59,13 +59,18 @@ def refresh_token(refresh_token):
         return r.json()
 
 def get_user_data(access_token):
-    headers = { 'Authorization': f"Bearer {access_token}" }
+    headers = { 'Authorization': f"Bearer {access_token}"}
     r = requests.get('https://discord.com/api/v10/users/@me', headers=headers)
     if r.status_code == 200:
         return r.json()
     else:
         return r.json()
 
+def update_metadata(access_token: str, metadata: dict):
+    headers = {'Authorization': f"Bearer {access_token}", 'Content-Type': 'application/json'}
+    url = f'https://discord.com/api/v10/users/@me/applications/{os.environ["DISCORD_ID"]}/role-connection'
+    r = requests.put(url, headers=headers, data=json.dumps(metadata))
+    return r.json()
 
 def create_dm(user_id):
     data = {
