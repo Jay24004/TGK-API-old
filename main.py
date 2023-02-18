@@ -9,7 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 app.mongo = pymongo.MongoClient(os.environ['MONGO_URL'])
 app.db = app.mongo.tgk_database
-app.auth = app.db.auth
+app.auth = app.db.OAuth2
 app.votes = app.db.Votes
 
 @app.route('/')
