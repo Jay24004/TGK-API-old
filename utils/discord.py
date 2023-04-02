@@ -23,7 +23,7 @@ def get_oath_url():
         'client_id': os.environ['DISCORD_ID'],
         'redirect_uri': os.environ['REDIRECT_URI'],
         'response_type': 'code',
-        'scope': 'identify applications.commands.permissions.update role_connections.write guilds',
+        'scope': 'identify role_connections.write',
         'prompt': 'consent'
     }
     return f'{url}?{requests.compat.urlencode(params)}'
