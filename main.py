@@ -8,7 +8,7 @@ import datetime
 load_dotenv()
 app = Flask(__name__)
 app.mongo = pymongo.MongoClient(os.environ['MONGO_URL'])
-app.db = app.mongo.tgk_database
+app.db = app.mongo.Database
 app.auth = app.db.OAuth2
 app.votes = app.db.Votes
 
@@ -71,18 +71,21 @@ def linked_role_auth():
             'expires_at': datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in']),
             'username': user_data['username'],
             'discriminator': user_data['discriminator'],
+            'scope': user_token['scope'],
             'metadata': {'platform_name': "The Gambler's Kingdom", 'platform_username': user_data['username'], 'metadata': {}}
         }
-        app.auth.insert_one(data)
+        app.auth.insert_one(data)        
+        return redirect('https://discord.gg/yEPYYDZ3dD')
     else:
-        print("data found")
         data['access_token'] = user_token['access_token']
         data['refresh_token'] = user_token['refresh_token']
         data['expires_in'] = user_token['expires_in']
         data['expires_at'] = datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in'])
         data['username'] = user_data['username']
+        data['scope'] = user_token['scope']
         data['discriminator'] = user_data['discriminator']
-        app.auth.update_one({'_id': int(user_data['id'])}, {'$set': data})
-    
-    update_metadata(data['access_token'], data['metadata'])
-    return redirect('https://discord.gg/yEPYYDZ3dD')
+
+        app.votes.update_one({'_id': int(data['_id'])}, {'$set': data})
+        
+        update_metadata(data['access_token'], data['metadata'])
+        return redirect('https://discord.gg/yEPYYDZ3dD')

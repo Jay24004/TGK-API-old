@@ -23,7 +23,7 @@ def get_oath_url():
         'client_id': os.environ['DISCORD_ID'],
         'redirect_uri': os.environ['REDIRECT_URI'],
         'response_type': 'code',
-        'scope': 'identify role_connections.write',
+        'scope': 'identify guilds applications.commands.permissions.update role_connections.write',
         'prompt': 'consent'
     }
     return f'{url}?{requests.compat.urlencode(params)}'
@@ -36,7 +36,7 @@ def get_code(code):
         'grant_type': 'authorization_code',
         'code': code,
         'redirect_uri': os.environ['REDIRECT_URI'],
-        'scope': 'identify role_connections.write'
+        'scope': 'identify guilds applications.commands.permissions.update role_connections.write'
     }
     r = requests.post('https://discord.com/api/oauth2/token', data=data, headers=headers)
     if r.status_code == 200:
