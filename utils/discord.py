@@ -99,6 +99,12 @@ def send_dm(dm_id:int, total_votes:int, streak:int):
     r = requests.post(f'{base_url}/channels/{dm_id}/messages', headers=headers, data=json.dumps(payload))
     return r.status_code
 
+def add_role(user_id):
+    url = f"https://discord.com/api/v10/guilds/785839283847954433/members/{user_id}/roles/786884615192313866"
+    
+    r = requests.put(url=url, headers=headers)
+    return r.status_code
+
 def send_webhook(user_id, total_votes, streak):
     user = requests.get(f'{base_url}/users/{user_id}', headers=headers).json()
     user_name = user['username'] + '#' + user['discriminator']

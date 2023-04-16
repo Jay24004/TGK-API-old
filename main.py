@@ -1,5 +1,5 @@
 from flask import Flask, request, abort, redirect
-from utils.discord import create_dm, send_dm, send_webhook, get_code, get_user_data,  get_oath_url, update_metadata
+from utils.discord import *
 from dotenv import load_dotenv
 import os
 import pymongo
@@ -44,6 +44,10 @@ def vote():
         app.votes.update_one({'_id': int(request.json['user'])}, {'$set': user_data})
     send_dm(dm_id=user_data['dm_id'], total_votes=user_data['votes'], streak=user_data['streak'])
     send_webhook(user_data['_id'], user_data['votes'], user_data['streak'])
+    try:
+        add_role(user_data['_id'])
+    except:
+        pass
     return "OK", 200
 
 @app.route('/api/linked-role/auth')
