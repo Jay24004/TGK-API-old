@@ -79,15 +79,20 @@ def linked_role_auth():
         app.auth.insert_one(data)        
         return redirect('https://discord.gg/yEPYYDZ3dD')
     else:
-        data['access_token'] = user_token['access_token']
-        data['refresh_token'] = user_token['refresh_token']
-        data['expires_in'] = user_token['expires_in']
-        data['expires_at'] = datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in'])
-        data['username'] = user_data['username']
-        data['scope'] = user_token['scope']
-        data['discriminator'] = user_data['discriminator']
+        filter = {'_id': int(user_data['id'])}
+        replacement = {
+            'access_token': user_token['access_token'],
+            'refresh_token': user_token['refresh_token'],
+            'expires_in': user_token['expires_in'],
+            'expires_at': datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in']),
+            'username': user_data['username'],
+            'discriminator': user_data['discriminator'],
+            'scope': user_token['scope'],
+        }
 
-        app.votes.update_one({'_id': int(data['_id'])}, {'$set': data}, upsert=True)
+        data = app.auth.replace_one(filter, replacement)
         
-        update_metadata(data['access_token'], data['metadata'])
-        return redirect('https://discord.gg/yEPYYDZ3dD')
+        if data['metadata'] != {}:
+            return redirect('https://discord.com/oauth2/authorized')
+        else:
+            update_metadata(user_data['access_token'], user_data['metadata'])
