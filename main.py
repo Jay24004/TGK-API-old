@@ -52,8 +52,8 @@ def vote():
 
 @app.route('/api/linked-role/auth')
 def linked_role_auth():
-    
-    #check if code argument is present
+    print(os.environ['DISCORD_ID'])
+    print(os.environ['DISCORD_SECRET'])
     if request.args.get('code') is None:
         return redirect(get_oath_url())    
 
@@ -89,7 +89,7 @@ def linked_role_auth():
         data['scope'] = user_token['scope']
         data['discriminator'] = user_data['discriminator']
 
-        app.votes.update_one({'_id': int(data['_id'])}, {'$set': data})
+        app.votes.update_one({'_id': int(data['_id'])}, {'$set': data}, upsert=True)
         
         update_metadata(data['access_token'], data['metadata'])
         return redirect('https://discord.gg/yEPYYDZ3dD')
