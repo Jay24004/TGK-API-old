@@ -72,6 +72,12 @@ def update_metadata(access_token: str, metadata: dict):
     r = requests.put(url, headers=headers, data=json.dumps(metadata))
     return r.json()
 
+def get_metadata(access_token: str):
+    headers = {'Authorization': f"Bearer {access_token}"}
+    url = f'https://discord.com/api/v10/users/@me/applications/{os.environ["DISCORD_ID"]}/role-connection'
+    r = requests.get(url, headers=headers)
+    return r.json()
+
 def create_dm(user_id):
     data = {
         'recipient_id': user_id

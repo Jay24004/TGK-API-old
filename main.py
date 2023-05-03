@@ -80,6 +80,8 @@ def linked_role_auth():
         return redirect('https://discord.gg/yEPYYDZ3dD')
     else:
         filter = {'_id': int(user_data['id'])}
+        metadata = get_metadata(user_token['access_token'])
+        user_token = refresh_token(user_token['refresh_token'])
         replacement = {
             'access_token': user_token['access_token'],
             'refresh_token': user_token['refresh_token'],
@@ -88,10 +90,43 @@ def linked_role_auth():
             'username': user_data['username'],
             'discriminator': user_data['discriminator'],
             'scope': user_token['scope'],
+            'metadata': metadata
         }
 
-        datar = app.auth.replace_one(filter, replacement)
-        if data['metadata'] != {}:
-            return redirect('https://discord.com/oauth2/authorized')
-        else:
-            update_metadata(user_data['access_token'], user_data['metadata'])
+        app.auth.replace_one(filter, replacement, upsert=False)
+        data = app.auth.find_one({'_id': int(user_data['id'])})
+        return redirect('https://discord.com/oauth2/authorized')
+    
+# @app.route('/api/linked-role/refresh')
+# def linked_role_refresh():
+#     if request.args.get('code') is None:
+#         return "Unauthorized", 401
+    
+#     data = app.auth.find_one({'refresh_token': request.args.get('refresh_token')})
+#     if data is None:
+#         return "Unauthorized", 401
+    
+#     user_token = refresh_token(request.args.get('refresh_token'))
+#     if 'access_token' not in user_token.keys():
+#         return user_token, 400
+    
+#     user_data = get_user_data(user_token['access_token'])
+#     if 'id' not in user_data.keys():
+#         return user_data, 400
+    
+#     filter = {'_id': int(user_data['id'])}
+#     metadata = get_metadata(user_token['access_token'])
+#     replacement = {
+#         'access_token': user_token['access_token'],
+#         'refresh_token': user_token['refresh_token'],
+#         'expires_in': user_token['expires_in'],
+#         'expires_at': datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in']),
+#         'username': user_data['username'],
+#         'discriminator': user_data['discriminator'],
+#         'scope': user_token['scope'],
+#         'metadata': metadata
+#     }
+
+#     app.auth.replace_one(filter, replacement, upsert=False)
+#     data = app.auth.find_one({'_id': int(user_data['id'])})
+#     return 200, "OK"
