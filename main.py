@@ -52,8 +52,6 @@ def vote():
 
 @app.route('/api/linked-role/auth')
 def linked_role_auth():
-    print(os.environ['DISCORD_ID'])
-    print(os.environ['DISCORD_SECRET'])
     if request.args.get('code') is None:
         return redirect(get_oath_url())    
 
