@@ -90,8 +90,7 @@ def linked_role_auth():
             'scope': user_token['scope'],
         }
 
-        data = app.auth.replace_one(filter, replacement)
-        
+        datar = app.auth.replace_one(filter, replacement)
         if data['metadata'] != {}:
             return redirect('https://discord.com/oauth2/authorized')
         else:
