@@ -8,9 +8,9 @@ import datetime
 load_dotenv()
 app = Flask(__name__)
 app.mongo = pymongo.MongoClient(os.environ['MONGO_URL'])
-app.db = app.mongo.Database
-app.auth = app.db.OAuth2
-app.votes = app.db.Votes
+app.db = app.mongo['Database']
+app.auth = app.db['OAuth2']
+app.votes = app.db['Votes']
 
 @app.route('/')
 def index():
@@ -64,6 +64,7 @@ def linked_role_auth():
         return user_data, 400
 
     data = app.auth.find_one({'_id': int(user_data['id'])})
+    print(data)
     if data is None:
         data = {
             '_id': int(user_data['id']),
@@ -76,26 +77,26 @@ def linked_role_auth():
             'scope': user_token['scope'],
             'metadata': {'platform_name': "The Gambler's Kingdom", 'platform_username': user_data['username'], 'metadata': {}}
         }
-        app.auth.insert_one(data)        
-        return redirect('https://discord.gg/yEPYYDZ3dD')
-    else:
-        filter = {'_id': int(user_data['id'])}
-        metadata = get_metadata(user_token['access_token'])
-        user_token = refresh_token(user_token['refresh_token'])
-        replacement = {
-            'access_token': user_token['access_token'],
-            'refresh_token': user_token['refresh_token'],
-            'expires_in': user_token['expires_in'],
-            'expires_at': datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in']),
-            'username': user_data['username'],
-            'discriminator': user_data['discriminator'],
-            'scope': user_token['scope'],
-            'metadata': metadata
-        }
+        app.auth.insert_one(data)
+        update_metadata(user_token['access_token'], data['metadata'])
+    
+    filter = {'_id': int(user_data['id'])}
+    metadata = get_metadata(user_token['access_token'])
+    user_token = refresh_token(user_token['refresh_token'])
+    replacement = {
+        'access_token': user_token['access_token'],
+        'refresh_token': user_token['refresh_token'],
+        'expires_in': user_token['expires_in'],
+        'expires_at': datetime.datetime.now() + datetime.timedelta(seconds=user_token['expires_in']),
+        'username': user_data['username'],
+        'discriminator': user_data['discriminator'],
+        'scope': user_token['scope'],
+        'metadata': metadata
+    }
 
-        app.auth.replace_one(filter, replacement, upsert=False)
-        data = app.auth.find_one({'_id': int(user_data['id'])})
-        return redirect('https://discord.com/oauth2/authorized')
+    app.auth.replace_one(filter, replacement, upsert=False)
+    data = app.auth.find_one({'_id': int(user_data['id'])})
+    return redirect('https://discord.com/oauth2/authorized')
     
 # @app.route('/api/linked-role/refresh')
 # def linked_role_refresh():
