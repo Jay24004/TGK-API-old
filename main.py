@@ -1,9 +1,10 @@
-from flask import Flask, request, abort, redirect
+from flask import Flask, request, abort, redirect, render_template_string
 from utils.discord import *
 from dotenv import load_dotenv
 import os
 import pymongo
 import datetime
+import re
 
 load_dotenv()
 app = Flask(__name__)
@@ -95,3 +96,20 @@ def linked_role_auth():
         data = app.auth.find_one({'_id': int(user_data['id'])})
         update_metadata(user_token['access_token'], data['metadata'])
         return redirect('https://discord.com/oauth2/authorized')
+
+@app.route('/api/transcript')
+def transcript():
+    if request.args.get('url') is None:
+        return "Missing URL", 400
+    url = request.args.get('url')
+
+    #regex for discord attachments urls which files is html
+    if re.match(r'https:\/\/cdn\.discordapp\.com\/attachments\/\d+\/\d+\/.*\.html', url) is None:
+        return "Invalid URL", 400
+    else:
+        file = requests.get(url)
+        if file.status_code != 200:
+            return "Invalid URL", 400
+        else:
+            #render html file as page
+            return file.text, 200
