@@ -13,28 +13,32 @@ app.db = app.mongo['Database']
 app.auth = app.db['OAuth2']
 app.votes = app.db['Votes']
 
+
 @app.route('/')
 def index():
     return "Unauthorized", 401
 
+
 @app.route('/api/vote', methods=['POST'])
 def vote():
-    if request.method != 'POST' or request.content_type != 'application/json' or request.headers['Authorization'] != os.environ['VOTE_PASSWORD']:
+    if request.method != 'POST' or request.content_type != 'application/json' or request.headers['Authorization'] != \
+            os.environ['VOTE_PASSWORD']:
         return "Unauthorized", 401
-    
+
     user_data = app.votes.find_one({'_id': int(request.json['user'])})
     if user_data is None:
-        user_data = {'_id': int(request.json['user']),'dm_id': None, 'votes': 0,'streak': 0,'last_vote': datetime.datetime.now(),'reminded': False}
+        user_data = {'_id': int(request.json['user']), 'dm_id': None, 'votes': 0, 'streak': 0,
+                     'last_vote': datetime.datetime.now(), 'reminded': False}
         dm_id = create_dm(user_data['_id'])
         user_data['dm_id'] = int(dm_id)
         app.votes.insert_one(user_data)
-    
+
     user_data['votes'] += 1
     if (datetime.datetime.now() - user_data['last_vote']).total_seconds() > 108000:
         user_data['streak'] = 0
     else:
         user_data['streak'] += 1
-    
+
     user_data['last_vote'] = datetime.datetime.now()
     user_data['reminded'] = False
 
@@ -51,10 +55,11 @@ def vote():
         pass
     return "OK", 200
 
+
 @app.route('/api/linked-role/auth')
 def linked_role_auth():
     if request.args.get('code') is None:
-        return redirect(get_oath_url())    
+        return redirect(get_oath_url())
 
     user_token = get_code(request.args.get('code'))
     if 'access_token' not in user_token.keys():
@@ -75,7 +80,8 @@ def linked_role_auth():
             'username': user_data['username'],
             'discriminator': user_data['discriminator'],
             'scope': user_token['scope'],
-            'metadata': {'platform_name': "The Gambler's Kingdom", 'platform_username': user_data['username'], 'metadata': {}}
+            'metadata': {'platform_name': "The Gambler's Kingdom", 'platform_username': user_data['username'],
+                         'metadata': {}}
         }
         app.auth.insert_one(data)
         update_metadata(user_token['access_token'], data['metadata'])
@@ -89,13 +95,15 @@ def linked_role_auth():
         data['username'] = user_data['username']
         data['discriminator'] = user_data['discriminator']
         if 'metadata' not in data.keys():
-            data['metadata'] = {'platform_name': "The Gambler's Kingdom", 'platform_username': user_data['username'], 'metadata': {}}
-        
+            data['metadata'] = {'platform_name': "The Gambler's Kingdom", 'platform_username': user_data['username'],
+                                'metadata': {}}
+
         app.auth.update_one({'_id': int(user_data['id'])}, {'$set': data})
-        
+
         data = app.auth.find_one({'_id': int(user_data['id'])})
         update_metadata(user_token['access_token'], data['metadata'])
         return redirect('https://discord.com/oauth2/authorized')
+
 
 @app.route('/api/transcript')
 def transcript():
@@ -103,7 +111,7 @@ def transcript():
         return "Missing URL", 400
     url = request.args.get('url')
 
-    #regex for discord attachments urls which files is html
+    # regex for discord attachments urls which files is html
     if re.match(r'https:\/\/cdn\.discordapp\.com\/attachments\/\d+\/\d+\/.*\.html', url) is None:
         return "Invalid URL", 400
     else:
@@ -111,5 +119,10 @@ def transcript():
         if file.status_code != 200:
             return "Invalid URL", 400
         else:
-            #render html file as page
+            # render html file as page
             return file.text, 200
+
+
+@app.route('/invite/nat')
+def _nat():
+    return redirect('https://discord.com/api/oauth2/authorize?client_id=951019275844460565&permissions=8&scope=bot%20applications.commands')
